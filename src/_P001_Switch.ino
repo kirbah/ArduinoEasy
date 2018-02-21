@@ -141,7 +141,7 @@ boolean Plugin_001(byte function, struct EventStruct *event, String& string)
 
         switchstate[event->TaskIndex] = digitalRead(Settings.TaskDevicePin1[event->TaskIndex]);
         outputstate[event->TaskIndex] = switchstate[event->TaskIndex];
-        
+
         // if boot state must be send, inverse default state
         if (Settings.TaskDevicePluginConfig[event->TaskIndex][3])
         {
@@ -218,7 +218,7 @@ boolean Plugin_001(byte function, struct EventStruct *event, String& string)
         if (command == F("gpio"))
         {
           success = true;
-          if (event->Par1 >= 2 && event->Par1 <= 13)
+          if (Plugin_001_updatable_pin(event->Par1))
           {
             pinMode(event->Par1, OUTPUT);
             digitalWrite(event->Par1, event->Par2);
@@ -232,14 +232,14 @@ boolean Plugin_001(byte function, struct EventStruct *event, String& string)
         if (command == F("pwm"))
         {
           success = true;
-          if (event->Par1 >= 2 && event->Par1 <= 13)
+          if (Plugin_001_updatable_pin(event->Par1))
           {
             pinMode(event->Par1, OUTPUT);
-            
+
             if(event->Par3 != 0)
             {
               byte prev_mode;
-              uint16_t prev_value;            
+              uint16_t prev_value;
               getPinState(PLUGIN_ID_001, event->Par1, &prev_mode, &prev_value);
               if(prev_mode != PIN_MODE_PWM)
                 prev_value = 0;
@@ -255,7 +255,7 @@ boolean Plugin_001(byte function, struct EventStruct *event, String& string)
                 delay(1);
               }
             }
-            
+
             analogWrite(event->Par1, event->Par2);
             setPinState(PLUGIN_ID_001, event->Par1, PIN_MODE_PWM, event->Par2);
             log = String(F("SW   : GPIO ")) + String(event->Par1) + String(F(" Set PWM to ")) + String(event->Par2);
@@ -267,7 +267,7 @@ boolean Plugin_001(byte function, struct EventStruct *event, String& string)
         if (command == F("pulse"))
         {
           success = true;
-          if (event->Par1 >= 2 && event->Par1 <= 13)
+          if (Plugin_001_updatable_pin(event->Par1))
           {
             pinMode(event->Par1, OUTPUT);
             digitalWrite(event->Par1, event->Par2);
@@ -283,7 +283,7 @@ boolean Plugin_001(byte function, struct EventStruct *event, String& string)
         if (command == F("longpulse"))
         {
           success = true;
-          if (event->Par1 >= 2 && event->Par1 <= 13)
+          if (Plugin_001_updatable_pin(event->Par1))
           {
             pinMode(event->Par1, OUTPUT);
             digitalWrite(event->Par1, event->Par2);
@@ -343,4 +343,8 @@ boolean Plugin_001(byte function, struct EventStruct *event, String& string)
       }
   }
   return success;
+}
+
+boolean Plugin_001_updatable_pin(int pin) {
+  return pin == 3 || ( pin >= 5 && pin <= 9) || ( pin >= 14 && pin <= 49) || ( pin >= 56 && pin <= 69);
 }

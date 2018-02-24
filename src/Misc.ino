@@ -44,7 +44,7 @@ void SelectSDCard(boolean sd)
   digitalWrite(EthernetShield_CS_W5100, sd);
   digitalWrite(EthernetShield_CS_SDCard, !sd);
   }
-  
+
 /*********************************************************************************************\
    Get value count from sensor type
   \*********************************************************************************************/
@@ -413,7 +413,7 @@ void fileSystemCheck()
   pinMode(EthernetShield_CS_SDCard, OUTPUT);
   pinMode(EthernetShield_CS_W5100, OUTPUT);
   SelectSDCard(true);
-  
+
   if (SD.begin(EthernetShield_CS_SDCard))
   {
     String log = F("SD Mount successful");
@@ -659,7 +659,7 @@ void LoadCustomControllerSettings(byte* memAddress, int datasize)
   \*********************************************************************************************/
 void SaveToFile(const __FlashStringHelper* fname, int index, byte* memAddress, int datasize)
 {
-  File f = SD.open(fname, FILE_WRITE);
+  File f = SD.open(fname, O_READ | O_WRITE);
   if (f)
   {
     f.seek(index);
@@ -670,7 +670,12 @@ void SaveToFile(const __FlashStringHelper* fname, int index, byte* memAddress, i
       pointerToByteToSave++;
     }
     f.close();
-    String log = F("FILE : File saved");
+    String log = F("FILE : File saved ");
+    log += fname;
+    log += F(" index ");
+    log += index;
+    log += F(" size ");
+    log += datasize;
     addLog(LOG_LEVEL_INFO, log);
   }
 }
@@ -861,7 +866,7 @@ void addLog(byte loglevel, const char *line)
       }
     logFile.close();
   }
-    
+
 }
 
 
@@ -1521,7 +1526,7 @@ unsigned long getNtpTime()
 {
   const char* ntpServerName = "pool.ntp.org";
   unsigned long result=0;
-  
+
   IPAddress timeServerIP;
 
   // The W5100 seems to have an issue with mixing TCP UDP on the same socket.
@@ -2004,4 +2009,3 @@ void createRuleEvents(byte TaskIndex)
     rulesProcessing(eventString);
   }
 }
-

@@ -195,6 +195,7 @@ EthernetServer MyWebServer(80);
 #if FEATURE_MQTT
 EthernetClient mqtt;
 PubSubClient MQTTclient(mqtt);
+long lastMQTTReconnectAttempt = 0;
 #endif
 
 #define EthernetShield_CS_SDCard     4
@@ -831,7 +832,9 @@ void backgroundtasks()
 {
   WebServerHandleClient();
 #if FEATURE_MQTT
-  MQTTclient.loop();
+  if(!MQTTclient.loop()) {
+    MQTTCheck();   // MQTT client is no longer connected. Attempt to reconnect
+  }
 #endif
   statusLED(false);
   checkUDP();

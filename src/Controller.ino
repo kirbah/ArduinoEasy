@@ -104,36 +104,30 @@ void MQTTConnect()
   LWTTopic.replace(F("/#"), F("/status"));
   LWTTopic.replace(F("%sysname%"), Settings.Name);
   
-  for (byte x = 1; x < 3; x++)
+  String log = "";
+  boolean MQTTresult = false;
+
+  String msg = F("Connection Lost");
+  if ((SecuritySettings.ControllerUser[0] != 0) && (SecuritySettings.ControllerPassword[0] != 0))
+    MQTTresult = MQTTclient.connect(clientid.c_str(), SecuritySettings.ControllerUser, SecuritySettings.ControllerPassword, LWTTopic.c_str(), 0, 0, msg.c_str());
+  else
+    MQTTresult = MQTTclient.connect(clientid.c_str(), LWTTopic.c_str(), 0, 0, msg.c_str());
+
+  if (MQTTresult)
   {
-    String log = "";
-    boolean MQTTresult = false;
-
-    String msg = F("Connection Lost");
-    if ((SecuritySettings.ControllerUser[0] != 0) && (SecuritySettings.ControllerPassword[0] != 0))
-      MQTTresult = MQTTclient.connect(clientid.c_str(), SecuritySettings.ControllerUser, SecuritySettings.ControllerPassword, LWTTopic.c_str(), 0, 0, msg.c_str());
-    else
-      MQTTresult = MQTTclient.connect(clientid.c_str(), LWTTopic.c_str(), 0, 0, msg.c_str());
-
-    if (MQTTresult)
-    {
-      log = F("MQTT : Connected to broker");
-      addLog(LOG_LEVEL_INFO, log);
-      subscribeTo = Settings.MQTTsubscribe;
-      subscribeTo.replace(F("%sysname%"), Settings.Name);
-      MQTTclient.subscribe(subscribeTo.c_str());
-      log = F("Subscribed to: ");
-      log += subscribeTo;
-      addLog(LOG_LEVEL_INFO, log);
-      break; // end loop if succesfull
-    }
-    else
-    {
-      log = F("MQTT : Failed to connected to broker");
-      addLog(LOG_LEVEL_ERROR, log);
-    }
-
-    delay(500);
+    log = F("MQTT : Connected to broker");
+    addLog(LOG_LEVEL_INFO, log);
+    subscribeTo = Settings.MQTTsubscribe;
+    subscribeTo.replace(F("%sysname%"), Settings.Name);
+    MQTTclient.subscribe(subscribeTo.c_str());
+    log = F("Subscribed to: ");
+    log += subscribeTo;
+    addLog(LOG_LEVEL_INFO, log);
+  }
+  else
+  {
+    log = F("MQTT : Failed to connected to broker");
+    addLog(LOG_LEVEL_ERROR, log);
   }
 }
 
@@ -147,12 +141,14 @@ void MQTTCheck()
   if (Protocol[ProtocolIndex].usesMQTT)
     if (!MQTTclient.connected())
     {
-      String log = F("MQTT : Connection lost");
-      addLog(LOG_LEVEL_ERROR, log);
-      connectionFailures += 2;
-      MQTTclient.disconnect();
-      delay(1000);
-      MQTTConnect();
+      if (millis() - lastMQTTReconnectAttempt > 60000) {
+        // Reconnect attempts once per minute
+        String log = F("MQTT : Connection lost");
+        addLog(LOG_LEVEL_ERROR, log);
+        connectionFailures++;
+        MQTTConnect();
+        lastMQTTReconnectAttempt = millis();
+      }
     }
     else if (connectionFailures)
       connectionFailures--;
